@@ -117,3 +117,24 @@ def get_recipe(recipe_id: int):
     recipe_ingredients = recipe_ingredients.split("-(.o)0)0_-23")
     return recipe_row(recipe_id, recipe_name, recipe_ingredients, recipe_image, recipe_desc, recipe_instructions,
                       instructions_type)
+
+
+def update_recipe(recipe_id, name, ingredients: list | tuple, image_path, desc, instructions, instruction_type):
+    ingredients = "-(.o)0)0_-23".join(ingredients)
+    db_cur.execute("UPDATE recipes SET"
+                   f"recipe_name = '{name}', recipe_ingredients = '{ingredients}', recipe_image = '{image_path}', "
+                   f"recipe_desc = '{desc}', recipe_instructions = '{instructions}', "
+                   f"instructions_type = '{instruction_type}' "
+                   f"WHERE recipe_id = {recipe_id}")
+
+
+def next_id_filter(current_id):
+    def to_return(working_id):
+        return working_id > current_id
+    return to_return
+
+
+def previous_id_filter(current_id):
+    def to_return(working_id):
+        return working_id < current_id
+    return to_return
