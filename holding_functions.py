@@ -1,9 +1,13 @@
 import sqlite3
 import os
 import webbrowser
+from collections import namedtuple
 
 db_conn = sqlite3.connect('recipes_info.sqlite', detect_types=sqlite3.PARSE_DECLTYPES)
 db_cur = db_conn.cursor()
+
+recipe_row = namedtuple('recipe_row', ['recipe_id', 'recipe_name', 'recipe_ingredients', 'recipe_image',
+                                       'recipe_desc', 'recipe_instructions', 'instructions_type'])
 
 try:
     db_cur.execute("""CREATE TABLE recipes(
@@ -93,9 +97,9 @@ def all_saved_recipes():
     for row in data:
         recipe_id, recipe_name, recipe_ingredients, recipe_image, recipe_desc, recipe_instructions, \
             instructions_type = row
-        recipe_ingredients = recipe_ingredients.join("-(.o)0)0_-23")
-        to_return.append((recipe_id, recipe_name, recipe_ingredients, recipe_image, recipe_desc, recipe_instructions,
-                         instructions_type))
+        recipe_ingredients = recipe_ingredients.split("-(.o)0)0_-23")
+        to_return.append(recipe_row(recipe_id, recipe_name, recipe_ingredients, recipe_image, recipe_desc,
+                                    recipe_instructions, instructions_type))
     return to_return
 
 
@@ -108,4 +112,8 @@ def get_recipe(recipe_id: int):
     """
     db_cur.execute("SELECT recipe_id, recipe_name, recipe_ingredients, recipe_image, recipe_desc, recipe_instructions, "
                    f"instructions_type FROM recipes WHERE recipe_id = {recipe_id}")
-    return db_cur.fetchone()
+    recipe_id, recipe_name, recipe_ingredients, recipe_image, recipe_desc, recipe_instructions, instructions_type = \
+        db_cur.fetchone()
+    recipe_ingredients = recipe_ingredients.split("-(.o)0)0_-23")
+    return recipe_row(recipe_id, recipe_name, recipe_ingredients, recipe_image, recipe_desc, recipe_instructions,
+                      instructions_type)
