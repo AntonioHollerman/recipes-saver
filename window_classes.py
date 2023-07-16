@@ -72,10 +72,91 @@ class EditFrame(ttk.Frame):
         super().__init__(master)
         self.master_win = master
         self.recipe_info = recipe
+        self.ingredients_frame = IngredientsListFrame(self)
 
     def save_recipe(self):
-        if self.recipe_info.recipe_id == -1:
-            add_recipe(*self.recipe_info[1:])
-            self.master_win.recipes[self.recipe_info.recipe_id] = self.recipe_info
+        id_ = self.recipe_info.recipe_id
+
+        new_ingredient_list = []
+        for index, row in enumerate(self.ingredients_frame.ingredients_row_widgets):
+            ingredient: tk.StringVar = row[0]
+            if index not in self.ingredients_frame.ignore:
+                new_ingredient_list.append(ingredient.get())
+
+        new_recipe = recipe_row(id_, name, new_ingredient_list, recipe_image, recipe_desc, recipe_instructions,
+                                instructions_type)
+        if new_recipe.recipe_id == -1:
+            new_id = add_recipe(*self.recipe_info[1:])
+            self.master_win.recipes[new_id] = new_recipe
+            self.master_win.current_recipe = new_recipe
         else:
             update_recipe(*self.recipe_info)
+
+
+class IngredientsListFrame(ttk.Frame):
+    def __init__(self, master: EditFrame):
+        super().__init__(master)
+        self.edit_frame = master
+        self.ingredients_row_widgets: List[List[tk.StringVar | ttk.Entry | ttk.Button | ttk.Separator]] = []
+        self.mini_frame = ttk.Frame(self)
+        self.ignore = set()
+
+        self.add_ingredient_button = ttk.Button(self, text="Add Ingredient", command=self.add_ingredient)
+        ttk.Label(self, text="Ingredients", anchor="center").grid(row=0, column=1, columnspan=2, sticky="ew")
+
+        self.mini_frame.columnconfigure(0, weight=5)
+        self.mini_frame.columnconfigure(1, weight=2)
+        for index, ingredient in enumerate(self.edit_frame.recipe_info.recipe_ingredients):
+            self.ingredients_row_widgets.append([])
+            self.ingredients_row_widgets[index].append(tk.StringVar(self.edit_frame.master_win, value=ingredient))
+            ingredient_entry = ttk.Entry(self.mini_frame, textvariable=self.ingredients_row_widgets[index][0])
+            self.ingredients_row_widgets[index].append(ingredient_entry)
+            delete_button = ttk.Button(self.mini_frame, text="X", width=5, command=self.remove_ingredient(index))
+            row_seperator = ttk.Separator(self.mini_frame)
+            self.ingredients_row_widgets[index].append(delete_button)
+            self.ingredients_row_widgets[index].append(row_seperator)
+
+            next_row = index * 2
+            ingredient_entry.grid(row=next_row, column=0, sticky="ew")
+            delete_button.grid(row=next_row, column=1, sticky="w")
+            row_seperator.grid(row=next_row+1, column=0, columnspan=2, sticky="ew")
+
+            self.mini_frame.rowconfigure(next_row, weight=5)
+            self.mini_frame.rowconfigure(next_row+1, weight=1)
+
+        self.mini_frame.grid(row=1, column=0, columnspan=2, sticky="nesw")
+        self.add_ingredient_button.grid(row=2, column=1)
+
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=10)
+        self.rowconfigure(2, weight=1)
+
+        self.columnconfigure(0, weight=5)
+        self.columnconfigure(1, weight=2)
+
+    def add_ingredient(self):
+        self.ingredients_row_widgets.append([])
+        self.ingredients_row_widgets[-1].append(tk.StringVar(self.edit_frame.master_win))
+        ingredient_entry = ttk.Entry(self.mini_frame, textvariable=self.ingredients_row_widgets[-1][0])
+        self.ingredients_row_widgets[-1].append(ingredient_entry)
+        delete_button = ttk.Button(self.mini_frame, text="X", width=5,
+                                   command=self.remove_ingredient(len(self.ingredients_row_widgets) - 1))
+        row_seperator = ttk.Separator(self.mini_frame)
+        self.ingredients_row_widgets[-1].append(delete_button)
+        self.ingredients_row_widgets[-1].append(row_seperator)
+
+        next_row = len(self.ingredients_row_widgets) * 2
+        ingredient_entry.grid(row=next_row, column=0, sticky="ew")
+        delete_button.grid(row=next_row, column=1, sticky="w")
+        row_seperator.grid(row=next_row + 1, column=0, columnspan=2, sticky="ew")
+
+        self.mini_frame.rowconfigure(next_row, weight=5)
+        self.mini_frame.rowconfigure(next_row + 1, weight=1)
+
+    def remove_ingredient(self, index):
+        def to_return():
+            for widget in self.ingredients_row_widgets[index]:
+                widget.destroy()
+                self.ignore.add(index)
+        return to_return
+
