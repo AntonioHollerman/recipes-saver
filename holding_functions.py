@@ -39,7 +39,7 @@ def add_recipe(name, ingredients: list | tuple, image_path, desc, instructions, 
     :param desc: The description of the meal
     :param instructions: The web link or file for the instructions of the recipe
     :param instruction_type: Informs if the instructions are a web link or a file
-    :return: None
+    :return: newest recipe id
     """
     ingredients = "-(.o)0)0_-23".join(ingredients)
     global next_recipe_id
@@ -50,6 +50,7 @@ def add_recipe(name, ingredients: list | tuple, image_path, desc, instructions, 
                    f"({next_recipe_id}, '{name}', '{ingredients}', '{image_path}', '{desc}', '{instructions}', "
                    f"'{instruction_type}')")
     next_recipe_id += 1
+    return next_recipe_id - 1
 
 
 def remove_recipe(recipe_id: int):
