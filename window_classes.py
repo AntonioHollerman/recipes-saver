@@ -74,8 +74,8 @@ class CurrentRecipeFrame(ttk.Frame):
         if recipe is not None:
             self.recipe_info = recipe
         else:
-            self.recipe_info = recipe_row(-1, 'New Recipe', ['Edit Ingredients'], 'None', 'Add Description', 'None',
-                                          'None')
+            self.recipe_info = recipe_row(-1, 'Recipe Name Here', ['Edit Ingredients'], 'None', 'Add Description',
+                                          'None', 'None')
 
 
 class EditFrame(ttk.Frame):
@@ -99,6 +99,8 @@ class EditFrame(ttk.Frame):
         self.weblink_entry = ttk.Entry(self, textvariable=self.tk_website_link)
         self.fileloc_entry = ttk.Entry(self, textvariable=self.tk_fileloc)
         self.fileloc_button = ttk.Button(self, text="Select File", command=self.select_file)
+        self.back_button = ttk.Button(self, text="<- Back", command=self.back_button_command)
+        self.reset_button = ttk.Button(self, text="Reset", command=self.reset_button_command)
 
         self.tk_recipe_title = tk.StringVar(self, value=recipe.recipe_name)
         self.title_entry = ttk.Entry(self, textvariable=self.tk_recipe_title)
@@ -110,8 +112,10 @@ class EditFrame(ttk.Frame):
         self.weblink_entry.grid(row=1, column=1, sticky="we", padx=3, pady=3)
         self.fileloc_entry.grid(row=2, column=1, sticky="we", padx=3, pady=3)
         self.fileloc_button.grid(row=3, column=1, sticky="n", padx=3, pady=3)
-        self.title_entry.grid(row=1, column=2, padx=3, pady=3)
-        self.desc_box.grid(row=3, column=2, rowspan=2, sticky="news", padx=3, pady=3)
+        self.back_button.grid(row=4, column=0, sticky="w", padx=3, pady=3)
+        self.reset_button.grid(row=4, column=1, sticky="e", padx=3, pady=3)
+        self.title_entry.grid(row=1, column=2, sticky="ew", padx=3, pady=3)
+        self.desc_box.grid(row=3, column=2, rowspan=3, sticky="news", padx=3, pady=3)
         self.ingredients_frame.grid(row=0, column=2, sticky="nesw", padx=3, pady=3)
 
         if recipe.recipe_image != "None" and os.path.exists(recipe.recipe_image):
@@ -124,8 +128,8 @@ class EditFrame(ttk.Frame):
             self.display_image(file_found=False)
 
         self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=2)
+        self.columnconfigure(1, weight=6)
+        self.columnconfigure(2, weight=10)
         self.rowconfigure(0, weight=8)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
@@ -148,6 +152,12 @@ class EditFrame(ttk.Frame):
             self.master_win.current_recipe = new_recipe
         else:
             update_recipe(*self.recipe_info)
+
+    def back_button_command(self):
+        pass
+
+    def reset_button_command(self):
+        pass
 
     def display_image(self, file_found):
         if file_found:
