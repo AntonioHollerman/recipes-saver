@@ -55,6 +55,17 @@ class HomeFrame(ttk.Frame):
             self.current_recipe = new_current_recipe
             self.master_win.current_recipe = new_current_recipe
 
+    def random_recipe(self):
+        available_ids = list(self.master_win.recipes.keys())
+        available_ids.remove(self.current_recipe.recipe_id)
+        if available_ids:
+            new_current_recipe = self.master_win.recipes[choice(available_ids)]
+            self.current_recipe = new_current_recipe
+            self.master_win.current_recipe = new_current_recipe
+
+    def refresh_window(self):
+        pass
+
 
 class CurrentRecipeFrame(ttk.Frame):
     def __init__(self, master: HomeFrame, recipe: recipe_row | None):
@@ -73,6 +84,52 @@ class EditFrame(ttk.Frame):
         self.master_win = master
         self.recipe_info = recipe
         self.ingredients_frame = IngredientsListFrame(self)
+        self.tk_website_link = tk.StringVar(self)
+        self.tk_fileloc = tk.StringVar(self)
+        if recipe.instructions_type == "web_link":
+            self.tk_website_link.set(recipe.recipe_instructions)
+        if recipe.instructions_type == "file_location":
+            self.tk_fileloc.set(recipe.recipe_instructions)
+
+        self.tk_recipe_instruc_type = tk.StringVar(self, value=recipe.instructions_type)
+        self.weblink_radio = ttk.Radiobutton(self, value="web_link", variable=self.tk_recipe_instruc_type,
+                                             text="Web site: ")
+        self.fileloc_radio = ttk.Radiobutton(self, value="file_location", variable=self.tk_recipe_instruc_type,
+                                             text="File Location: ")
+        self.weblink_entry = ttk.Entry(self, textvariable=self.tk_website_link)
+        self.fileloc_entry = ttk.Entry(self, textvariable=self.tk_fileloc)
+        self.fileloc_button = ttk.Button(self, text="Select File", command=self.select_file)
+
+        self.tk_recipe_title = tk.StringVar(self, value=recipe.recipe_name)
+        self.title_entry = ttk.Entry(self, textvariable=self.tk_recipe_title)
+        self.desc_box = tk.Text(self, height=5)
+        self.desc_box.insert("1.0", recipe.recipe_desc)
+
+        self.weblink_radio.grid(row=1, column=0, sticky="e", padx=3, pady=3)
+        self.fileloc_radio.grid(row=2, column=0, sticky="e", padx=3, pady=3)
+        self.weblink_entry.grid(row=1, column=1, sticky="we", padx=3, pady=3)
+        self.fileloc_entry.grid(row=2, column=1, sticky="we", padx=3, pady=3)
+        self.fileloc_button.grid(row=3, column=1, sticky="n", padx=3, pady=3)
+        self.title_entry.grid(row=1, column=2, padx=3, pady=3)
+        self.desc_box.grid(row=3, column=2, rowspan=2, sticky="news", padx=3, pady=3)
+        self.ingredients_frame.grid(row=0, column=2, sticky="nesw", padx=3, pady=3)
+
+        if recipe.recipe_image != "None" and os.path.exists(recipe.recipe_image):
+            try:
+                self.display_image(True)
+            except Exception as err:
+                self.display_image(file_found=False)
+                print(err)
+        else:
+            self.display_image(file_found=False)
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=2)
+        self.rowconfigure(0, weight=8)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
 
     def save_recipe(self):
         id_ = self.recipe_info.recipe_id
@@ -91,6 +148,18 @@ class EditFrame(ttk.Frame):
             self.master_win.current_recipe = new_recipe
         else:
             update_recipe(*self.recipe_info)
+
+    def display_image(self, file_found):
+        if file_found:
+            ttk.Button(self, text="select image", command=self.select_image).grid(row=0, column=0, columnspan=2)
+        else:
+            ttk.Button(self, text="select image", command=self.select_image).grid(row=0, column=0, columnspan=2)
+
+    def select_image(self):
+        pass
+
+    def select_file(self):
+        pass
 
 
 class IngredientsListFrame(ttk.Frame):
@@ -156,7 +225,10 @@ class IngredientsListFrame(ttk.Frame):
     def remove_ingredient(self, index):
         def to_return():
             for widget in self.ingredients_row_widgets[index]:
-                widget.destroy()
+                try:
+                    widget.destroy()
+                except AttributeError:
+                    pass
                 self.ignore.add(index)
         return to_return
 
