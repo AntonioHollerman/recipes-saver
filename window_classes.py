@@ -19,15 +19,24 @@ class RecipesWindow(tk.Tk):
         else:
             self.current_recipe = None
 
-        # self.home_frame = HomeFrame(self, self.current_recipe)
-        # self.edit_frame = EditFrame(self, self.current_recipe)
-        # self.current_window = 'Home Frame'
+        self.current_window = HomeFrame(self, self.current_recipe)
+        self.frame_displayed = 'Home Frame'
 
-    def run(self):
-        self.mainloop()
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+        self.current_window.grid(row=0, column=0, sticky="nesw")
 
     def swap_frame(self):
-        pass
+        self.current_window.destroy()
+        if self.frame_displayed == 'Home Frame':
+            self.frame_displayed = 'Edit Frame'
+            self.current_window = EditFrame(self, self.current_recipe)
+            self.current_window.grid(row=0, column=0, sticky="nesw")
+        else:
+            self.frame_displayed = 'Home Frame'
+            self.current_window = HomeFrame(self, self.current_recipe)
+            self.current_window.grid(row=0, column=0, sticky="nesw")
 
 
 class HomeFrame(ttk.Frame):
@@ -40,8 +49,9 @@ class HomeFrame(ttk.Frame):
         self.random_button = ttk.Button(self, text="Random", command=self.random_recipe)
         self.next_button = ttk.Button(self, text="-->", command=self.next_recipe)
         self.back_button = ttk.Button(self, text="<--", command=self.previous_recipe)
-        self.edit_button = ttk.Button(self, text="Edit")
-        self.crate_button = ttk.Button(self, text="Add New Recipe")
+        self.edit_button = ttk.Button(self, text="Edit", command=self.master_win.swap_frame)
+        self.crate_button = ttk.Button(self, text="Add New Recipe", command=self.create_recipe)
+        self.delete_button = ttk.Button(self, text="Delete", command=self.delete_recipe)
 
         ttk.Label(self, text="Your recipes are below", justify="center", anchor="center").grid(row=0,
                                                                                                column=1, sticky="ew")
@@ -51,6 +61,7 @@ class HomeFrame(ttk.Frame):
         self.next_button.grid(row=3, column=2, sticky="e")
         self.edit_button.grid(row=4, column=0, sticky="w")
         self.crate_button.grid(row=4, column=2, sticky="e")
+        self.delete_button.grid(row=4, column=1, sticky="n")
         self.current_recipe_frame.grid(row=3, column=1, sticky="nesw")
 
         self.rowconfigure(0, weight=3)
@@ -63,6 +74,19 @@ class HomeFrame(ttk.Frame):
         self.columnconfigure(1, weight=5)
         self.columnconfigure(2, weight=1)
 
+        if any(recipe_id > recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.next_button["state"] = "normal"
+        else:
+            self.next_button["state"] = "disabled"
+
+        if any(recipe_id < recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.back_button["state"] = "normal"
+        else:
+            self.back_button["state"] = "disabled"
+
+        if not self.master_win.recipes:
+            self.create_recipe()
+
     def next_recipe(self):
         available_ids = list(filter(next_id_filter(self.current_recipe.recipe_id), self.master_win.recipes.keys()))
         available_ids.sort()
@@ -70,6 +94,16 @@ class HomeFrame(ttk.Frame):
             new_current_recipe = self.master_win.recipes[available_ids[0]]
             self.current_recipe = new_current_recipe
             self.master_win.current_recipe = new_current_recipe
+            self.current_recipe_frame.refresh(new_current_recipe)
+        if any(recipe_id > self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.next_button["state"] = "normal"
+        else:
+            self.next_button["state"] = "disabled"
+
+        if any(recipe_id < self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.back_button["state"] = "normal"
+        else:
+            self.back_button["state"] = "disabled"
 
     def previous_recipe(self):
         available_ids = list(filter(previous_id_filter(self.current_recipe.recipe_id), self.master_win.recipes.keys()))
@@ -78,6 +112,16 @@ class HomeFrame(ttk.Frame):
             new_current_recipe = self.master_win.recipes[available_ids[0]]
             self.current_recipe = new_current_recipe
             self.master_win.current_recipe = new_current_recipe
+            self.current_recipe_frame.refresh(new_current_recipe)
+        if any(recipe_id > self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.next_button["state"] = "normal"
+        else:
+            self.next_button["state"] = "disabled"
+
+        if any(recipe_id < self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.back_button["state"] = "normal"
+        else:
+            self.back_button["state"] = "disabled"
 
     def random_recipe(self):
         available_ids = list(self.master_win.recipes.keys())
@@ -86,6 +130,16 @@ class HomeFrame(ttk.Frame):
             new_current_recipe = self.master_win.recipes[choice(available_ids)]
             self.current_recipe = new_current_recipe
             self.master_win.current_recipe = new_current_recipe
+            self.current_recipe_frame.refresh(new_current_recipe)
+        if any(recipe_id > self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.next_button["state"] = "normal"
+        else:
+            self.next_button["state"] = "disabled"
+
+        if any(recipe_id < self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.back_button["state"] = "normal"
+        else:
+            self.back_button["state"] = "disabled"
 
     def create_recipe(self):
         new_id = add_recipe('Recipe Name Here', ['Edit Ingredients'], 'None', 'Add Description', 'None', 'None')
@@ -93,6 +147,36 @@ class HomeFrame(ttk.Frame):
                                          'None', 'None')
         self.master_win.current_recipe = self.current_recipe
         self.master_win.recipes[new_id] = self.current_recipe
+        self.current_recipe_frame.refresh(self.current_recipe)
+
+        if any(recipe_id > self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.next_button["state"] = "normal"
+        else:
+            self.next_button["state"] = "disabled"
+
+        if any(recipe_id < self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.back_button["state"] = "normal"
+        else:
+            self.back_button["state"] = "disabled"
+
+    def delete_recipe(self):
+        old_id = self.current_recipe.recipe_id
+        if any(recipe_id > self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.next_recipe()
+        elif any(recipe_id < self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.previous_recipe()
+        else:
+            self.create_recipe()
+        del self.master_win.recipes[old_id]
+
+        if any(recipe_id > self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.next_button["state"] = "normal"
+        else:
+            self.next_button["state"] = "disabled"
+        if any(recipe_id < self.current_recipe.recipe_id for recipe_id in self.master_win.recipes.keys()):
+            self.back_button["state"] = "normal"
+        else:
+            self.back_button["state"] = "disabled"
 
 
 class CurrentRecipeFrame(ttk.Frame):
@@ -118,13 +202,19 @@ class CurrentRecipeFrame(ttk.Frame):
             for widget in self.tk_widgets:
                 widget.destroy()
             self.tk_widgets = []
-        self.recipe_info = recipe
+        recp = self.recipe_info
+        if self.new_image is not None:
+            new_recipe = recipe_row(recp.recipe_id, recp.recipe_name, recp.recipe_ingredients, self.new_image,
+                                    recp.recipe_desc, recp.recipe_instructions, recp.instructions_type)
+            self.home_frame.master_win.recipes[recp.recipe_id] = new_recipe
+            self.new_image = None
 
+        self.recipe_info = recipe
         recipe_title = ttk.Label(self, text=recipe.recipe_name, anchor="center", justify="center")
         ingredients_label = ttk.Label(self, text="Ingredients", anchor="center", justify="center")
         line_seperator = ttk.Separator(self)
         ingredients_list_box = tk.Listbox(self, height=len(recipe.recipe_ingredients))
-        open_instruction_button = ttk.Button(self, text="Open: ")
+        open_instruction_button = ttk.Button(self, text="Open: ", command=self.open_instructions)
         instructions_location_label = ttk.Label(self, text=recipe.recipe_instructions, anchor="e", justify="left")
         for ingredient in recipe.recipe_ingredients:
             ingredients_list_box.insert(tk.END, ingredient)
@@ -151,6 +241,9 @@ class CurrentRecipeFrame(ttk.Frame):
                 print(err)
         else:
             self.display_image(False)
+
+    def open_instructions(self):
+        open_instructions(self.recipe_info.recipe_id)
 
     def display_image(self, file_found, recipe_path=None):
         if file_found:
