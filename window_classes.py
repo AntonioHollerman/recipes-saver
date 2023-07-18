@@ -30,11 +30,37 @@ class RecipesWindow(tk.Tk):
 
 
 class HomeFrame(ttk.Frame):
-    def __init__(self, master: RecipesWindow, recipe: recipe_row | None):
+    def __init__(self, master: RecipesWindow, recipe: recipe_row):
         super().__init__(master)
         self.master_win = master
         self.current_recipe_frame = CurrentRecipeFrame(self, recipe)
         self.current_recipe = recipe
+
+        self.random_button = ttk.Button(self, text="Random", command=self.random_recipe)
+        self.next_button = ttk.Button(self, text="-->", command=self.next_recipe)
+        self.back_button = ttk.Button(self, text="<--", command=self.previous_recipe)
+        self.edit_button = ttk.Button(self, text="Edit")
+        self.crate_button = ttk.Button(self, text="Add New Recipe")
+
+        ttk.Label(self, text="Your recipes are below", justify="center", anchor="center").grid(row=0,
+                                                                                               column=1, sticky="ew")
+        ttk.Separator(self).grid(row=1, column=0, columnspan=3, sticky="ew")
+        self.random_button.grid(row=2, column=1)
+        self.back_button.grid(row=3, column=0, sticky="w")
+        self.next_button.grid(row=3, column=2, sticky="e")
+        self.edit_button.grid(row=4, column=0, sticky="w")
+        self.crate_button.grid(row=4, column=2, sticky="e")
+        self.current_recipe_frame.grid(row=3, column=1, sticky="nesw")
+
+        self.rowconfigure(0, weight=3)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=3)
+        self.rowconfigure(3, weight=9)
+        self.rowconfigure(4, weight=3)
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=5)
+        self.columnconfigure(2, weight=1)
 
     def next_recipe(self):
         available_ids = list(filter(next_id_filter(self.current_recipe.recipe_id), self.master_win.recipes.keys()))
@@ -43,9 +69,6 @@ class HomeFrame(ttk.Frame):
             new_current_recipe = self.master_win.recipes[available_ids[0]]
             self.current_recipe = new_current_recipe
             self.master_win.current_recipe = new_current_recipe
-        else:
-            self.current_recipe = None
-            self.master_win.current_recipe = None
 
     def previous_recipe(self):
         available_ids = list(filter(previous_id_filter(self.current_recipe.recipe_id), self.master_win.recipes.keys()))
@@ -63,19 +86,82 @@ class HomeFrame(ttk.Frame):
             self.current_recipe = new_current_recipe
             self.master_win.current_recipe = new_current_recipe
 
-    def refresh_window(self):
-        pass
+    def create_recipe(self):
+        new_id = add_recipe('Recipe Name Here', ['Edit Ingredients'], 'None', 'Add Description', 'None', 'None')
+        self.current_recipe = recipe_row(new_id, 'Recipe Name Here', ['Edit Ingredients'], 'None', 'Add Description',
+                                         'None', 'None')
+        self.master_win.current_recipe = self.current_recipe
+        self.master_win.recipes[new_id] = self.current_recipe
 
 
 class CurrentRecipeFrame(ttk.Frame):
-    def __init__(self, master: HomeFrame, recipe: recipe_row | None):
+    def __init__(self, master: HomeFrame, recipe: recipe_row):
         super().__init__(master)
         self.edit_frame = master
-        if recipe is not None:
-            self.recipe_info = recipe
+        self.recipe_info = None
+        self.tk_widgets: List[ttk.Separator | ttk.Button | ttk.Label] = []
+
+        self.rowconfigure(0, weight=3)
+        self.rowconfigure(1, weight=8)
+        self.rowconfigure(2, weight=3)
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
+        self.refresh(recipe)
+
+    def refresh(self, recipe: recipe_row):
+        if self.tk_widgets:
+            for widget in self.tk_widgets:
+                widget.destroy()
+            self.tk_widgets = []
+        self.recipe_info = recipe
+
+        recipe_title = ttk.Label(self, text=recipe.recipe_name, anchor="center", justify="center")
+        ingredients_label = ttk.Label(self, text="Ingredients", anchor="center", justify="center")
+        line_seperator = ttk.Separator(self)
+        ingredients_list_box = tk.Listbox(self, height=len(recipe.recipe_ingredients))
+        open_instruction_button = ttk.Button(self, text="Open: ")
+        instructions_location_label = ttk.Label(self, text=recipe.recipe_instructions, anchor="e", justify="left")
+        for ingredient in recipe.recipe_ingredients:
+            print(ingredient)
+            ingredients_list_box.insert(tk.END, ingredient)
+        ingredients_list_box["state"] = "disabled"
+
+        recipe_title.grid(row=0, column=0, sticky="ew")
+        ingredients_label.grid(row=0, column=1, sticky="ew")
+        ingredients_list_box.grid(row=1, column=1, sticky="nesw")
+        open_instruction_button.grid(row=2, column=0, sticky="e")
+        instructions_location_label.grid(row=2, column=1, sticky="ew")
+
+        self.tk_widgets.append(recipe_title)
+        self.tk_widgets.append(ingredients_label)
+        self.tk_widgets.append(ingredients_list_box)
+        self.tk_widgets.append(line_seperator)
+        self.tk_widgets.append(open_instruction_button)
+        self.tk_widgets.append(instructions_location_label)
+
+        if recipe.recipe_image != "None" and os.path.exists(recipe.recipe_image):
+            try:
+                self.display_image(True)
+            except Exception as err:
+                self.display_image(file_found=False)
+                print(err)
         else:
-            self.recipe_info = recipe_row(-1, 'Recipe Name Here', ['Edit Ingredients'], 'None', 'Add Description',
-                                          'None', 'None')
+            self.display_image(file_found=False)
+
+    def display_image(self, file_found):
+        if file_found:
+            image_button = ttk.Button(self, text="select image", command=self.select_image)
+            image_button.grid(row=1, column=0)
+            self.tk_widgets.append(image_button)
+        else:
+            image_button = ttk.Button(self, text="select image", command=self.select_image)
+            image_button.grid(row=1, column=0)
+            self.tk_widgets.append(image_button)
+
+    def select_image(self):
+        pass
 
 
 class EditFrame(ttk.Frame):
@@ -146,12 +232,11 @@ class EditFrame(ttk.Frame):
 
         new_recipe = recipe_row(id_, name, new_ingredient_list, recipe_image, recipe_desc, recipe_instructions,
                                 instructions_type)
-        if new_recipe.recipe_id == -1:
-            new_id = add_recipe(*self.recipe_info[1:])
-            self.master_win.recipes[new_id] = new_recipe
-            self.master_win.current_recipe = new_recipe
+        self.master_win.recipes[id_] = new_recipe
+        if id_ in self.master_win.recipes:
+            pass
         else:
-            update_recipe(*self.recipe_info)
+            pass
 
     def back_button_command(self):
         pass
