@@ -1,8 +1,9 @@
 from holding_functions import *
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from random import choice
 from typing import List, Dict
+from PIL import Image, ImageTk
 
 
 class RecipesWindow(tk.Tk):
@@ -18,9 +19,9 @@ class RecipesWindow(tk.Tk):
         else:
             self.current_recipe = None
 
-        self.home_frame = HomeFrame(self, self.current_recipe)
-        self.edit_frame = EditFrame(self, self.current_recipe)
-        self.current_window = 'Home Frame'
+        # self.home_frame = HomeFrame(self, self.current_recipe)
+        # self.edit_frame = EditFrame(self, self.current_recipe)
+        # self.current_window = 'Home Frame'
 
     def run(self):
         self.mainloop()
@@ -97,9 +98,11 @@ class HomeFrame(ttk.Frame):
 class CurrentRecipeFrame(ttk.Frame):
     def __init__(self, master: HomeFrame, recipe: recipe_row):
         super().__init__(master)
-        self.edit_frame = master
-        self.recipe_info = None
+        self.home_frame = master
+        self.recipe_info = recipe_row
         self.tk_widgets: List[ttk.Separator | ttk.Button | ttk.Label] = []
+        self.recipe_photo = None
+        self.new_image = None
 
         self.rowconfigure(0, weight=3)
         self.rowconfigure(1, weight=8)
@@ -124,7 +127,6 @@ class CurrentRecipeFrame(ttk.Frame):
         open_instruction_button = ttk.Button(self, text="Open: ")
         instructions_location_label = ttk.Label(self, text=recipe.recipe_instructions, anchor="e", justify="left")
         for ingredient in recipe.recipe_ingredients:
-            print(ingredient)
             ingredients_list_box.insert(tk.END, ingredient)
         ingredients_list_box["state"] = "disabled"
 
@@ -143,25 +145,32 @@ class CurrentRecipeFrame(ttk.Frame):
 
         if recipe.recipe_image != "None" and os.path.exists(recipe.recipe_image):
             try:
-                self.display_image(True)
+                self.display_image(True, recipe.recipe_image)
             except Exception as err:
-                self.display_image(file_found=False)
+                self.display_image(False)
                 print(err)
         else:
-            self.display_image(file_found=False)
+            self.display_image(False)
 
-    def display_image(self, file_found):
+    def display_image(self, file_found, recipe_path=None):
         if file_found:
-            image_button = ttk.Button(self, text="select image", command=self.select_image)
-            image_button.grid(row=1, column=0)
-            self.tk_widgets.append(image_button)
+            recipe_image = Image.open(recipe_path)
+            self.recipe_photo = ImageTk.PhotoImage(recipe_image)
+            recipe_label = ttk.Label(self, image=self.recipe_photo)
+            recipe_label.grid(row=1, column=0)
+            self.tk_widgets.append(recipe_label)
         else:
             image_button = ttk.Button(self, text="select image", command=self.select_image)
             image_button.grid(row=1, column=0)
             self.tk_widgets.append(image_button)
 
     def select_image(self):
-        pass
+        image_path = filedialog.askopenfilename()
+        try:
+            self.display_image(True, image_path)
+            self.new_image = image_path
+        except Exception as err:
+            print(err)
 
 
 class EditFrame(ttk.Frame):
@@ -172,6 +181,9 @@ class EditFrame(ttk.Frame):
         self.ingredients_frame = IngredientsListFrame(self)
         self.tk_website_link = tk.StringVar(self)
         self.tk_fileloc = tk.StringVar(self)
+        self.new_image = None
+        self.recipe_photo = None
+
         if recipe.instructions_type == "web_link":
             self.tk_website_link.set(recipe.recipe_instructions)
         if recipe.instructions_type == "file_location":
@@ -206,12 +218,12 @@ class EditFrame(ttk.Frame):
 
         if recipe.recipe_image != "None" and os.path.exists(recipe.recipe_image):
             try:
-                self.display_image(True)
+                self.display_image(True, recipe.recipe_image)
             except Exception as err:
-                self.display_image(file_found=False)
+                self.display_image(False)
                 print(err)
         else:
-            self.display_image(file_found=False)
+            self.display_image(False)
 
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=6)
@@ -244,14 +256,23 @@ class EditFrame(ttk.Frame):
     def reset_button_command(self):
         pass
 
-    def display_image(self, file_found):
+    def display_image(self, file_found, recipe_path=None):
         if file_found:
-            ttk.Button(self, text="select image", command=self.select_image).grid(row=0, column=0, columnspan=2)
+            recipe_image = Image.open(recipe_path)
+            self.recipe_photo = ImageTk.PhotoImage(recipe_image)
+            recipe_label = ttk.Label(self, image=self.recipe_photo)
+            recipe_label.grid(row=0, column=0, columnspan=2)
         else:
-            ttk.Button(self, text="select image", command=self.select_image).grid(row=0, column=0, columnspan=2)
+            image_button = ttk.Button(self, text="select image", command=self.select_image)
+            image_button.grid(row=0, column=0, columnspan=2)
 
     def select_image(self):
-        pass
+        image_path = filedialog.askopenfilename()
+        try:
+            self.display_image(True, image_path)
+            self.new_image = image_path
+        except Exception as err:
+            print(err)
 
     def select_file(self):
         pass
