@@ -120,13 +120,22 @@ def get_recipe(recipe_id: int):
                       instructions_type)
 
 
-def update_recipe(recipe_id, name, ingredients: list | tuple, image_path, desc, instructions, instruction_type):
+def update_recipe(recipe: recipe_row):
+    recipe_id, name, ingredients, image_path, desc, instructions, instruction_type = recipe
     ingredients = "-(.o)0)0_-23".join(ingredients)
-    db_cur.execute("UPDATE recipes SET"
+    db_cur.execute("UPDATE recipes SET "
                    f"recipe_name = '{name}', recipe_ingredients = '{ingredients}', recipe_image = '{image_path}', "
                    f"recipe_desc = '{desc}', recipe_instructions = '{instructions}', "
                    f"instructions_type = '{instruction_type}' "
                    f"WHERE recipe_id = {recipe_id}")
+
+
+def get_ids():
+    all_ids = []
+    db_cur.execute("SELECT recipe_id FROM recipes")
+    for row in db_cur.fetchall():
+        all_ids.append(row[0])
+    return all_ids
 
 
 def next_id_filter(current_id):

@@ -30,10 +30,27 @@ class RecipesWindow(tk.Tk):
     def swap_frame(self):
         self.current_window.destroy()
         if self.frame_displayed == 'Home Frame':
+            if self.current_window.current_recipe_frame.new_image is not None:
+                new_recipe = recipe_row(self.current_recipe.recipe_id, self.current_recipe.recipe_name,
+                                        self.current_recipe.recipe_ingredients,
+                                        self.current_window.current_recipe_frame.new_image,
+                                        self.current_recipe.recipe_desc, self.current_recipe.recipe_instructions,
+                                        self.current_recipe.instructions_type)
+                self.recipes[self.current_recipe.recipe_id] = new_recipe
+                self.current_recipe = new_recipe
+                self.current_window.new_image = None
             self.frame_displayed = 'Edit Frame'
             self.current_window = EditFrame(self, self.current_recipe)
             self.current_window.grid(row=0, column=0, sticky="nesw")
         else:
+            if self.current_window.new_image is not None:
+                new_recipe = recipe_row(self.current_recipe.recipe_id, self.current_recipe.recipe_name,
+                                        self.current_recipe.recipe_ingredients, self.current_window.new_image,
+                                        self.current_recipe.recipe_desc, self.current_recipe.recipe_instructions,
+                                        self.current_recipe.instructions_type)
+                self.recipes[self.current_recipe.recipe_id] = new_recipe
+                self.current_recipe = new_recipe
+                self.current_window.new_image = None
             self.frame_displayed = 'Home Frame'
             self.current_window = HomeFrame(self, self.current_recipe)
             self.current_window.grid(row=0, column=0, sticky="nesw")
@@ -292,6 +309,7 @@ class EditFrame(ttk.Frame):
         self.fileloc_button = ttk.Button(self, text="Select File", command=self.select_file)
         self.back_button = ttk.Button(self, text="<- Back", command=self.back_button_command)
         self.reset_button = ttk.Button(self, text="Reset", command=self.reset_button_command)
+        self.change_image_button = ttk.Button(self, text="Change Image", command=self.select_image)
 
         self.tk_recipe_title = tk.StringVar(self, value=recipe.recipe_name)
         self.title_entry = ttk.Entry(self, textvariable=self.tk_recipe_title)
@@ -303,6 +321,7 @@ class EditFrame(ttk.Frame):
         self.weblink_entry.grid(row=1, column=1, sticky="we", padx=3, pady=3)
         self.fileloc_entry.grid(row=2, column=1, sticky="we", padx=3, pady=3)
         self.fileloc_button.grid(row=3, column=1, sticky="n", padx=3, pady=3)
+        self.change_image_button.grid(row=3, column=0)
         self.back_button.grid(row=4, column=0, sticky="w", padx=3, pady=3)
         self.reset_button.grid(row=4, column=1, sticky="e", padx=3, pady=3)
         self.title_entry.grid(row=1, column=2, sticky="ew", padx=3, pady=3)
@@ -328,6 +347,19 @@ class EditFrame(ttk.Frame):
 
     def save_recipe(self):
         id_ = self.recipe_info.recipe_id
+        name = self.tk_recipe_title.get()
+        recipe_desc = self.desc_box.get("1.0", tk.END)
+
+        if self.new_image is None:
+            recipe_image = self.recipe_info.recipe_image
+        else:
+            recipe_image = self.new_image
+
+        instructions_type = self.tk_recipe_instruc_type.get()
+        if instructions_type == "file_location":
+            recipe_instructions = self.tk_fileloc.get()
+        else:
+            recipe_instructions = self.tk_website_link.get()
 
         new_ingredient_list = []
         for index, row in enumerate(self.ingredients_frame.ingredients_row_widgets):
@@ -338,16 +370,20 @@ class EditFrame(ttk.Frame):
         new_recipe = recipe_row(id_, name, new_ingredient_list, recipe_image, recipe_desc, recipe_instructions,
                                 instructions_type)
         self.master_win.recipes[id_] = new_recipe
-        if id_ in self.master_win.recipes:
-            pass
-        else:
-            pass
+        self.master_win.current_recipe = new_recipe
+        self.recipe_info = new_recipe
 
     def back_button_command(self):
-        pass
+        self.save_recipe()
+        self.master_win.swap_frame()
 
     def reset_button_command(self):
-        pass
+        self.master_win.swap_frame()
+        self.master_win.swap_frame()
+
+    def select_file(self):
+        new_path = filedialog.askopenfilename()
+        self.tk_fileloc.set(new_path)
 
     def display_image(self, file_found, recipe_path=None):
         if file_found:
@@ -366,9 +402,6 @@ class EditFrame(ttk.Frame):
             self.new_image = image_path
         except Exception as err:
             print(err)
-
-    def select_file(self):
-        pass
 
 
 class IngredientsListFrame(ttk.Frame):
