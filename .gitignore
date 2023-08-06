@@ -1,6 +1,7 @@
 
 .idea
 build
+build\recipes
 recipes.exe
 recipes.spec
 *.sqlite
@@ -8,3 +9,4 @@ recipes_info.sqlite
 pratice.py
 test_cases.py
 .idea/dataSources.local.xml
+.idea/dataSources/f1942e3b-2891-452d-af6d-35dfb4b66aee.xml
