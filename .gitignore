@@ -1,0 +1,10 @@
+
+.idea
+build
+recipes.exe
+recipes.spec
+*.sqlite
+recipes_info.sqlite
+pratice.py
+test_cases.py
+.idea/dataSources.local.xml
